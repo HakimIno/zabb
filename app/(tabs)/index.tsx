@@ -3,11 +3,12 @@ import { Icon } from '@/src/components/ui/icon';
 import { Text } from '@/src/components/ui/text';
 import { RideBooking } from '@/src/components/ride/RideBooking';
 import { THEME } from '@/src/utils/theme';
-import { Stack } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { MoonStarIcon, SunIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import { View, ImageStyle } from 'react-native';
+import { LocationResult } from '@/src/services/geocoding';
 import '@/src/config/mapbox';
 
 
@@ -40,6 +41,15 @@ const IMAGE_STYLE: ImageStyle = {
 
 export default function HomeScreen() {
   const { colorScheme } = useColorScheme();
+  const params = useLocalSearchParams();
+  
+  // Parse selected destination from search screen
+  const selectedDestination = params.selectedDestination 
+    ? JSON.parse(params.selectedDestination as string) as LocationResult
+    : null;
+
+  // Check if user wants to select on map
+  const selectOnMap = params.selectOnMap === 'true';
 
   return (
     <>
@@ -47,6 +57,8 @@ export default function HomeScreen() {
       <RideBooking 
         initialLocation={[100.5018, 13.7563]} // กรุงเทพฯ
         initialZoom={15}
+        selectedDestination={selectedDestination}
+        selectOnMap={selectOnMap}
       />
     </>
   );

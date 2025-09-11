@@ -14,7 +14,7 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '400',
+          fontFamily: 'Anuphan-Regular',
         },
       }}>
       <Tabs.Screen
@@ -27,7 +27,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'โปรไฟล์ & ตั้งค่า',
+          title: 'โปรไฟล์',
           tabBarIcon: ({ color, size }) => <UserIcon color={color} size={size} />,
         }}
       />
