@@ -4,9 +4,10 @@ import { useRouter } from 'expo-router';
 import Mapbox from '@rnmapbox/maps';
 import { useColorScheme } from 'nativewind';
 import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
-import { LocationSearch } from '../location/LocationSearch';
 import { SimpleMarker } from '../location/SimpleMarker';
+import { DraggableMarker } from '../location/DraggableMarker';
 import { geocodingService, LocationResult } from '@/src/services/geocoding';
+import { directionsService, DirectionRoute } from '@/src/services/directions';
 import { Icon } from '@/src/components/ui/icon';
 import { Text } from '@/src/components/ui/text';
 import { 
@@ -114,11 +115,16 @@ export function RideBooking({
   const pulseAnim = useRef(new Animated.Value(1)).current;
   
   const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
+  const [pickupLocation, setPickupLocation] = useState<[number, number] | null>(null);
   const [destination, setDestination] = useState<LocationResult | null>(null);
   const [isSelectingDestination, setIsSelectingDestination] = useState(false);
+  const [isSelectingPickup, setIsSelectingPickup] = useState(false);
   const [bookingStep, setBookingStep] = useState<'idle' | 'selecting' | 'confirming' | 'searching' | 'found' | 'riding'>('idle');
   const [selectedRideType, setSelectedRideType] = useState(RIDE_TYPES[0]);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(PAYMENT_METHODS[0]);
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
+  const [routeDistance, setRouteDistance] = useState<string>('');
+  const [routeDuration, setRouteDuration] = useState<string>('');
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['15%', '45%', '85%'], []);
@@ -156,6 +162,7 @@ export function RideBooking({
 
   useEffect(() => {
     setCurrentLocation(initialLocation);
+    setPickupLocation(initialLocation);
   }, [initialLocation]);
 
   useEffect(() => {
@@ -181,26 +188,81 @@ export function RideBooking({
   }, [selectOnMap]);
 
   const handleMapPress = async (event: any) => {
-    if (!isSelectingDestination) return;
+    if (!isSelectingDestination && !isSelectingPickup) return;
     
     const { geometry } = event;
     const coordinate: [number, number] = geometry.coordinates;
     
     try {
-      const location = await geocodingService.reverseGeocode(coordinate);
-      
-      if (location) {
-        setDestination(location);
-        setIsSelectingDestination(false);
-        setBookingStep('confirming');
-        bottomSheetRef.current?.snapToIndex(1);
+      if (isSelectingDestination) {
+        const location = await geocodingService.reverseGeocode(coordinate);
+        
+        if (location) {
+          setDestination(location);
+          setIsSelectingDestination(false);
+          setBookingStep('confirming');
+          bottomSheetRef.current?.snapToIndex(1);
+          
+          // คำนวณเส้นทาง
+          if (pickupLocation) {
+            await calculateRoute(pickupLocation, location.coordinates);
+          }
+        }
+      } else if (isSelectingPickup) {
+        setPickupLocation(coordinate);
+        setIsSelectingPickup(false);
+        
+        // คำนวณเส้นทางใหม่หากมีปลายทาง
+        if (destination) {
+          await calculateRoute(coordinate, destination.coordinates);
+        }
       }
     } catch (error) {
-      console.error('Error selecting destination:', error);
+      console.error('Error selecting location:', error);
     }
   };
 
-  const handleLocationSelect = (location: LocationResult) => {
+  const calculateRoute = async (from: [number, number], to: [number, number]) => {
+    try {
+      const directions = await directionsService.getDirections([from, to]);
+      
+      if (directions && directions.routes.length > 0) {
+        const route = directions.routes[0];
+        setRouteCoordinates(route.coordinates);
+        setRouteDistance(directionsService.formatDistance(route.distance));
+        setRouteDuration(directionsService.formatDuration(route.duration));
+        
+        // ปรับกล้องให้เห็นเส้นทางทั้งหมด
+        const bounds = {
+          ne: [
+            Math.max(from[0], to[0]) + 0.01,
+            Math.max(from[1], to[1]) + 0.01
+          ] as [number, number],
+          sw: [
+            Math.min(from[0], to[0]) - 0.01,
+            Math.min(from[1], to[1]) - 0.01
+          ] as [number, number]
+        };
+        
+        cameraRef.current?.fitBounds(bounds.ne, bounds.sw, [50, 50, 50, 300], 1000);
+      } else {
+        // ใช้การคำนวณแบบง่าย
+        const estimate = directionsService.calculateEstimate(from, to);
+        setRouteDistance(directionsService.formatDistance(estimate.distance));
+        setRouteDuration(directionsService.formatDuration(estimate.duration));
+        setRouteCoordinates([from, to]);
+      }
+    } catch (error) {
+      console.error('Error calculating route:', error);
+      // ใช้การคำนวณแบบง่าย
+      const estimate = directionsService.calculateEstimate(from, to);
+      setRouteDistance(directionsService.formatDistance(estimate.distance));
+      setRouteDuration(directionsService.formatDuration(estimate.duration));
+      setRouteCoordinates([from, to]);
+    }
+  };
+
+  const handleLocationSelect = async (location: LocationResult) => {
     setDestination(location);
     setIsSelectingDestination(false);
     setBookingStep('selecting');
@@ -212,6 +274,36 @@ export function RideBooking({
       zoomLevel: 16,
       animationDuration: 1000,
     });
+    
+    // คำนวณเส้นทาง
+    if (pickupLocation) {
+      await calculateRoute(pickupLocation, location.coordinates);
+    }
+  };
+
+  const handlePickupDrag = async (coordinate: [number, number]) => {
+    setPickupLocation(coordinate);
+    
+    // คำนวณเส้นทางใหม่
+    if (destination) {
+      await calculateRoute(coordinate, destination.coordinates);
+    }
+  };
+
+  const handleDestinationDrag = async (coordinate: [number, number]) => {
+    try {
+      const location = await geocodingService.reverseGeocode(coordinate);
+      if (location) {
+        setDestination(location);
+        
+        // คำนวณเส้นทางใหม่
+        if (pickupLocation) {
+          await calculateRoute(pickupLocation, coordinate);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating destination:', error);
+    }
   };
 
   const startBookingFlow = () => {
@@ -241,6 +333,16 @@ export function RideBooking({
     setBookingStep('idle');
     setDestination(null);
     setIsSelectingDestination(false);
+    setIsSelectingPickup(false);
+    setRouteCoordinates([]);
+    setRouteDistance('');
+    setRouteDuration('');
+    bottomSheetRef.current?.snapToIndex(0);
+  };
+
+  const selectPickupLocation = () => {
+    setIsSelectingPickup(true);
+    setBookingStep('idle');
     bottomSheetRef.current?.snapToIndex(0);
   };
 
@@ -277,12 +379,48 @@ export function RideBooking({
           />
         )}
         
+        {pickupLocation && (
+          <DraggableMarker
+            id="pickup-location"
+            coordinate={pickupLocation}
+            type="pickup"
+            draggable={bookingStep === 'selecting' || bookingStep === 'confirming'}
+            onDragEnd={handlePickupDrag}
+          />
+        )}
+        
         {destination && (
-          <SimpleMarker
+          <DraggableMarker
             id="destination"
             coordinate={destination.coordinates}
             type="destination"
+            draggable={bookingStep === 'selecting' || bookingStep === 'confirming'}
+            onDragEnd={handleDestinationDrag}
           />
+        )}
+        
+        {/* เส้นทาง */}
+        {routeCoordinates.length > 0 && (
+          <Mapbox.ShapeSource
+            id="route"
+            shape={{
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: routeCoordinates,
+              },
+            }}
+          >
+            <Mapbox.LineLayer
+              id="route-line"
+              style={{
+                lineColor: '#3B82F6',
+                lineWidth: 4,
+                lineOpacity: 0.8,
+              }}
+            />
+          </Mapbox.ShapeSource>
         )}
       </Mapbox.MapView>
 
@@ -312,7 +450,7 @@ export function RideBooking({
                   Where to?
                 </Text>
                 <Text className="text-xs text-gray-500 dark:text-gray-400 font-light font-anuphan">
-                  13, Allen, Ikeja Lagos
+                  {pickupLocation ? 'ตำแหน่งรับ' : '13, Allen, Ikeja Lagos'}
                 </Text>
               </View>
               <Icon as={ArrowRightIcon} className="size-5 text-gray-300 dark:text-gray-600" />
@@ -321,20 +459,27 @@ export function RideBooking({
         </View>
       )}
 
-      {/* Minimal Selection Instruction */}
-      {/* {isSelectingDestination && (
-        <View className="absolute top-32 left-3 right-3 z-5">
-          <View className="bg-gray-900 dark:bg-gray-100 rounded-2xl p-2 flex-row items-center">
-            <Animated.View 
-              style={{ transform: [{ scale: pulseAnim }] }}
-              className="w-3 h-3 bg-white dark:bg-gray-900 rounded-full mr-3"
-            />
-            <Text className="text-white dark:text-gray-900 font-light flex-1">
-              Tap anywhere on the map to set destination
+      {/* คำแนะนำการลากหมุด */}
+      {(isSelectingPickup || isSelectingDestination) && (
+        <View className="absolute top-10 left-3 right-3 z-0">
+          <View className="bg-blue-600 dark:bg-blue-500 rounded-2xl p-4 shadow-xl">
+            <Text className="text-white font-medium text-center">
+              {isSelectingPickup ? 'แตะเพื่อเลือกจุดรับ' : 'แตะเพื่อเลือกจุดหมาย'}
             </Text>
           </View>
         </View>
-      )} */}
+      )}
+
+      {/* คำแนะนำการลากหมุด */}
+      {(bookingStep === 'selecting' || bookingStep === 'confirming') && destination && pickupLocation && (
+        <View className="absolute top-10 left-3 right-3 z-0">
+          <View className="bg-gray-900 dark:bg-gray-100 rounded-2xl p-3 shadow-xl">
+            <Text className="text-white dark:text-gray-900 font-light text-center text-sm">
+              ลากหมุดเพื่อปรับตำแหน่ง
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Bottom Sheet */}
       <BottomSheet
@@ -491,14 +636,27 @@ export function RideBooking({
                     <View className="mb-4">
                       <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1 font-light">From</Text>
                       <Text className="font-medium text-gray-900 dark:text-gray-100">
-                        13, Allen, Ikeja Lagos
+                        จุดรับ
                       </Text>
+                      <TouchableOpacity 
+                        onPress={selectPickupLocation}
+                        className="mt-1"
+                      >
+                        <Text className="text-xs text-blue-600 dark:text-blue-400">
+                          เลือกจุดรับใหม่
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                     <View>
                       <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1 font-light">To</Text>
                       <Text className="font-medium text-gray-900 dark:text-gray-100">
                         {destination.name}
                       </Text>
+                      {routeDistance && routeDuration && (
+                        <Text className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {routeDistance} • {routeDuration}
+                        </Text>
+                      )}
                     </View>
                   </View>
                 </View>
@@ -530,21 +688,21 @@ export function RideBooking({
               
               {/* Action Buttons */}
               <View className="flex-row space-x-4">
-                <TouchableOpacity
-                  onPress={cancelBooking}
-                  className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-2xl p-4"
-                >
-                  <Text className="text-gray-700 dark:text-gray-300 font-light text-center text-lg">
-                    Cancel
-                  </Text>
-                </TouchableOpacity>
+              <TouchableOpacity
+                onPress={cancelBooking}
+                className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-2xl p-4"
+              >
+                <Text className="text-gray-700 dark:text-gray-300 font-light text-center text-lg">
+                  ยกเลิก
+                </Text>
+              </TouchableOpacity>
                 
                 <TouchableOpacity
                   onPress={confirmBooking}
                   className="flex-2 bg-gray-900 dark:bg-gray-100 rounded-2xl p-4"
                 >
                   <Text className="text-white dark:text-gray-900 font-medium text-center text-lg">
-                    Book Ride
+                    จองรถ
                   </Text>
                 </TouchableOpacity>
               </View>

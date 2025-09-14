@@ -9,3 +9,9 @@ export { storageService } from './storage/storageService';
 
 // Geocoding Services
 export { geocodingService } from './geocoding';
+
+// Search Services
+export { searchService } from './search/searchService';
+
+// Directions Services
+export { directionsService } from './directions';

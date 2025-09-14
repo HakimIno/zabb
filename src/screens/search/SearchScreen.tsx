@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, TouchableOpacity, ScrollView, TextInput, Alert, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { Icon } from '@/src/components/ui/icon';
 import { Text } from '@/src/components/ui/text';
-import { geocodingService, LocationResult } from '@/src/services/geocoding';
+import { LocationResult } from '@/src/services/geocoding';
+import { useSearchPlaces } from '@/src/hooks/useSearch';
+import { SearchRequest } from '@/src/services/search/searchService';
 import { 
   ArrowLeftIcon,
   SearchIcon,
@@ -48,10 +50,56 @@ export function SearchScreen({ currentLocation, onLocationSelect }: SearchScreen
   const router = useRouter();
   const { colorScheme } = useColorScheme();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<LocationResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const searchTimeoutRef = useRef<number | null>(null);
+
+  // Debounce search query
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  // Create search request
+  const searchRequest: SearchRequest | null = useMemo(() => {
+    if (!debouncedQuery.trim() || debouncedQuery.length < 2) {
+      return null;
+    }
+
+    return {
+      language: 'th',
+      limit: 10,
+      query: debouncedQuery.trim(),
+      ...(currentLocation && {
+        proximity: {
+          lat: currentLocation[1],
+          lng: currentLocation[0],
+        },
+      }),
+    };
+  }, [debouncedQuery, currentLocation]);
+
+  // Use TanStack Query for search
+  const {
+    data: searchResults = [],
+    isLoading: isSearching,
+    error: searchError,
+    isError,
+  } = useSearchPlaces(searchRequest, {
+    enabled: !!searchRequest,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    retry: 1,
+  });
 
   const handleLocationSelect = (location: LocationResult) => {
     if (onLocationSelect) {
@@ -121,42 +169,6 @@ export function SearchScreen({ currentLocation, onLocationSelect }: SearchScreen
     handleLocationSelect(location);
   };
 
-  // ค้นหาสถานที่เมื่อมีการพิมพ์
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    if (searchQuery.trim().length < 2) {
-      setSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
-
-    setIsSearching(true);
-    searchTimeoutRef.current = setTimeout(async () => {
-      try {
-        const results = await geocodingService.searchLocation({
-          query: searchQuery.trim(),
-          proximity: currentLocation,
-          limit: 10,
-        });
-        setSearchResults(results);
-      } catch (error) {
-        console.warn('Search error (using fallback):', error);
-        // ไม่ต้อง set empty array เพราะ geocoding service จะ return fallback data
-        setSearchResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchQuery, currentLocation]);
 
   const renderSearchResult = ({ item }: { item: LocationResult }) => (
     <TouchableOpacity
@@ -220,6 +232,15 @@ export function SearchScreen({ currentLocation, onLocationSelect }: SearchScreen
           {isSearching ? (
             <View className="flex-1 items-center justify-center">
               <Text className="text-gray-500 dark:text-gray-400">กำลังค้นหา...</Text>
+            </View>
+          ) : isError ? (
+            <View className="flex-1 items-center justify-center px-6">
+              <Text className="text-red-500 dark:text-red-400 text-center mb-2">
+                เกิดข้อผิดพลาดในการค้นหา
+              </Text>
+              <Text className="text-gray-500 dark:text-gray-400 text-center text-sm">
+                กรุณาลองใหม่อีกครั้ง
+              </Text>
             </View>
           ) : searchResults.length > 0 ? (
             <View className="flex-1">
