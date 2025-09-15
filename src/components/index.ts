@@ -22,4 +22,4 @@ export { InteractiveMap } from './location/InteractiveMap';
 export { SimpleMarker } from './location/SimpleMarker';
 
 // Ride Components
-export { RideBooking } from './ride/RideBooking';
+export * from './ride';

@@ -11,6 +11,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
+          elevation: 0
         },
         tabBarLabelStyle: {
           fontSize: 12,
