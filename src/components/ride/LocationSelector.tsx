@@ -1,36 +1,85 @@
-import { StyleSheet, Text, TouchableOpacity, View, TextInput, Image } from 'react-native'
-import React, { useState } from 'react'
-import { Icon } from '../ui/icon'
-import { XIcon, PlusIcon, ArrowDownUpIcon } from 'lucide-react-native'
-import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { Text, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { Icon } from '../ui/icon';
+import { XIcon } from 'lucide-react-native';
+import { LocationResult } from '@/src/services/search/searchService';
+import { useLocationSearch } from '@/src/hooks/useLocationSearch';
+import SearchInput from './SearchInput';
+import { PickupIcon, DestinationIcon } from './LocationIcons';
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 
 interface LocationSelectorProps {
     onCancel: () => void;
-    onSelectPickupLocation: (location: string) => void;
-    onSelectDestination: (location: string) => void;
+    onSelectPickupLocation: (location: LocationResult) => void;
+    onSelectDestination: (location: LocationResult) => void;
+    currentLocation?: [number, number];
 }
 
-const LocationSelector = ({ onCancel, onSelectPickupLocation, onSelectDestination }: LocationSelectorProps) => {
-    const [pickupText, setPickupText] = useState('');
-    const [destinationText, setDestinationText] = useState('');
-    const [focusedField, setFocusedField] = useState<'pickup' | 'destination' | null>(null);
+type FieldType = 'pickup' | 'destination';
 
-    const handlePickupSubmit = () => {
-        if (pickupText.trim()) {
-            onSelectPickupLocation(pickupText);
+const LocationSelector = ({ onCancel, onSelectPickupLocation, onSelectDestination, currentLocation }: LocationSelectorProps) => {
+    const {
+        focusedField,
+        searchFields,
+        setFocusedField,
+        updateFieldText,
+        getFieldState,
+        createManualLocation,
+        searchResults,
+        isSearching,
+    } = useLocationSearch({ currentLocation });
+
+    // Generic location select handler
+    const handleLocationSelect = (location: LocationResult, fieldType: FieldType) => {
+        updateFieldText(fieldType, location.name);
+
+        if (fieldType === 'pickup') {
+            onSelectPickupLocation(location);
+        } else {
+            onSelectDestination(location);
+        }
+        setFocusedField(null);
+    };
+
+    // Generic submit handler
+    const handleSubmit = (fieldType: FieldType) => {
+        const fieldState = getFieldState(fieldType);
+        const text = fieldState.text.trim();
+
+        if (!text) return;
+
+        const location = createManualLocation(fieldType);
+
+        if (fieldType === 'pickup') {
+            onSelectPickupLocation(location);
+        } else {
+            onSelectDestination(location);
         }
     };
 
-    const handleDestinationSubmit = () => {
-        if (destinationText.trim()) {
-            onSelectDestination(destinationText);
+    // Field configuration
+    const fieldConfig = {
+        pickup: {
+            placeholder: "ค้นหาจุดรับ...",
+            iconColor: "green",
+            iconUri: "https://img.icons8.com/deco-glyph/48/40C057/map-marker.png",
+            label: "สถานที่รับ"
+        },
+        destination: {
+            placeholder: "ค้นหาปลายทาง...",
+            iconColor: "indigo",
+            iconUri: "https://img.icons8.com/deco-glyph/48/7950F2/map-marker.png",
+            label: "ปลายทาง"
         }
     };
 
     return (
-        <View className="flex-1 ">
+        <View style={{ flex: 1 }}>
             {/* Header */}
-            <View className="flex-row items-center justify-between p-2 border-b border-gray-100 dark:border-neutral-950">
+            <View
+                className="flex-row items-center justify-between p-2 border-b border-gray-200 dark:border-neutral-900"
+                style={{ paddingHorizontal: 16 }}
+            >
                 <Text className="text-xl font-medium text-gray-900 dark:text-gray-100 font-anuphan-semibold">
                     เลือกตำแหน่ง
                 </Text>
@@ -40,91 +89,76 @@ const LocationSelector = ({ onCancel, onSelectPickupLocation, onSelectDestinatio
             </View>
 
             {/* Location Inputs */}
-            <View className=" flex flex-col gap-1">
-                {/* Pickup Location */}
-                <View className={`flex-row items-center bg-gray-50 dark:bg-neutral-900 rounded-lg p-1  ${focusedField === 'pickup'
-                    ? 'border-gray-900 dark:border-gray-100'
-                    : 'border-gray-200 dark:border-gray-800'
-                    }`}>
-                    <View className='w-10 h-10  bg-green-100 dark:bg-green-900 rounded-lg items-center justify-center mr-2'>
-                        <View className="w-6 h-6 bg-gray-100 dark:bg-green-950 rounded-full items-center justify-center">
-                            <View className="w-4 h-4 bg-green-500 rounded-full" />
-                        </View>
-                    </View>
-                    <TextInput
-                        value={pickupText}
-                        onChangeText={setPickupText}
-                        onFocus={() => setFocusedField('pickup')}
-                        onBlur={() => setFocusedField(null)}
-                        placeholder="ค้นหาจุดรับ..."
-                        placeholderTextColor="#9CA3AF"
-                        className="flex-1 text-sm text-gray-900 dark:text-gray-100 font-normal font-anuphan"
-                        returnKeyType="search"
-                    />
-                    {pickupText.length > 0 && (
-                        <TouchableOpacity onPress={() => setPickupText('')} className="p-1">
-                            <Icon as={XIcon} className="size-4 text-gray-400" />
-                        </TouchableOpacity>
-                    )}
-
-                    <View className='flex flex-row items-center justify-start gap-1'>
-                        <TouchableOpacity
-                            onPress={handlePickupSubmit}
-                            className='w-10 h-10 bg-green-100/40 dark:bg-green-900/40 rounded-lg items-center justify-center'>
-                            <Image source={{ uri: "https://img.icons8.com/deco-glyph/48/40C057/map-marker.png" }} className="size-6" />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            className='w-10 h-10 rounded-lg bg-slate-50 dark:bg-neutral-900 flex items-center justify-center'>
-                            <Icon as={PlusIcon} className='size-6 text-white' />
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-
-
-                {/* Destination */}
-                <View className="flex flex-col gap-0.5">
-                    <View className={`flex-row items-center bg-gray-50 dark:bg-neutral-900 rounded-lg p-1  ${focusedField === 'destination'
-                        ? 'border-gray-900 dark:border-gray-100'
-                        : 'border-gray-200 dark:border-gray-800'
-                        }`}>
-                        <View className='w-10 h-10  bg-indigo-100 dark:bg-indigo-900 rounded-lg items-center justify-center mr-2'>
-                            <View className="w-6 h-6 bg-gray-100 dark:bg-indigo-950 rounded-full items-center justify-center">
-                                <View className="w-4 h-4 bg-indigo-500 rounded-full" />
-                            </View>
-                        </View>
-                        <TextInput
-                            value={destinationText}
-                            onChangeText={setDestinationText}
-                            onFocus={() => setFocusedField('destination')}
-                            onBlur={() => setFocusedField(null)}
-                            onSubmitEditing={handleDestinationSubmit}
-                            placeholder="ค้นหาปลายทาง..."
-                            placeholderTextColor="#9CA3AF"
-                            className="flex-1 text-sm text-gray-900 dark:text-gray-100 font-normal font-anuphan"
-                            returnKeyType="search"
-                        />
-                        {destinationText.length > 0 && (
-                            <TouchableOpacity onPress={() => setDestinationText('')} className="p-1">
-                                <Icon as={XIcon} className="size-4 text-gray-400" />
-                            </TouchableOpacity>
-                        )}
-                        <View className='flex flex-row items-center justify-start gap-1'>
-                            <TouchableOpacity
-                                onPress={handleDestinationSubmit}
-                                className='w-10 h-10 bg-indigo-100/40 dark:bg-indigo-900/40 rounded-lg items-center justify-center'>
-                                <Image source={{ uri: "https://img.icons8.com/deco-glyph/48/7950F2/map-marker.png" }} className="size-6" />
-
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                className='w-10 h-10 rounded-lg bg-slate-50 dark:bg-neutral-900 flex items-center justify-center'>
-                                <Icon as={ArrowDownUpIcon} className='size-6 text-white' />
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
+            <View
+                className="flex flex-col gap-2 mt-3 border-b border-gray-200 dark:border-neutral-900 pb-4"
+                style={{ paddingHorizontal: 16 }}
+            >
+                <SearchInput
+                    fieldType="pickup"
+                    value={getFieldState('pickup').text}
+                    isFocused={focusedField === 'pickup'}
+                    placeholder={fieldConfig.pickup.placeholder}
+                    iconComponent={<PickupIcon />}
+                    iconColor={fieldConfig.pickup.iconColor}
+                    iconUri={fieldConfig.pickup.iconUri}
+                    onTextChange={(text) => updateFieldText('pickup', text)}
+                    onFocus={() => setFocusedField('pickup')}
+                    onBlur={() => setFocusedField(null)}
+                    onSubmit={() => { }}
+                    onClear={() => updateFieldText('pickup', '')}
+                />
+                <SearchInput
+                    fieldType="destination"
+                    value={getFieldState('destination').text}
+                    isFocused={focusedField === 'destination'}
+                    placeholder={fieldConfig.destination.placeholder}
+                    iconComponent={<DestinationIcon />}
+                    iconColor={fieldConfig.destination.iconColor}
+                    iconUri={fieldConfig.destination.iconUri}
+                    onTextChange={(text) => updateFieldText('destination', text)}
+                    onFocus={() => setFocusedField('destination')}
+                    onBlur={() => setFocusedField(null)}
+                    onSubmit={() => { }}
+                    onClear={() => updateFieldText('destination', '')}
+                />
             </View>
 
+            {/* Search Results Dropdown */}
+            {focusedField && (
+                <BottomSheetFlatList
+                    data={searchResults}
+                    keyExtractor={(item: LocationResult) => item.id.toString()}
+                    renderItem={({ item }: { item: LocationResult }) => (
+                        <TouchableOpacity
+                            onPress={() => handleLocationSelect(item, focusedField)}
+                            className="p-4 border-b border-gray-100 dark:border-neutral-800"
+                        >
+                            <Text className="text-gray-900 dark:text-gray-100 font-medium">
+                                {item.name}
+                            </Text>
+                            <Text className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                                {item.address}
+                            </Text>
+                        </TouchableOpacity>
+                    )}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{ flexGrow: 1 }}
+                    ListEmptyComponent={
+                        isSearching ? (
+                            <View className="p-4 items-center">
+                                <ActivityIndicator size="small" color="#3B82F6" />
+                                <Text className="text-gray-500 mt-2">กำลังค้นหา...</Text>
+                            </View>
+                        ) : (
+                            <View className="p-4 items-center">
+                                <Text className="text-gray-500">ไม่พบสถานที่ที่ค้นหา</Text>
+                            </View>
+                        )
+                    }
+                />
+            )}
         </View>
     )
 }

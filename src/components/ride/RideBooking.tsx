@@ -1,25 +1,22 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import { View, TouchableOpacity, Alert, Animated } from 'react-native';
-import { useRouter } from 'expo-router';
 import Mapbox from '@rnmapbox/maps';
 import { useColorScheme } from 'nativewind';
 import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { SimpleMarker } from '../location/SimpleMarker';
 import { DraggableMarker } from '../location/DraggableMarker';
-import { geocodingService, LocationResult } from '@/src/services/geocoding';
-import { directionsService } from '@/src/services/directions';
+import { LocationResult } from '@/src/services/geocoding';
 import { Text } from '@/src/components/ui/text';
 import { Icon } from '@/src/components/ui/icon';
-import { XIcon, NavigationIcon, SearchIcon, ArrowRightIcon, MapPinIcon } from 'lucide-react-native';
+import { XIcon } from 'lucide-react-native';
 import { RideTypeSelector } from './RideTypeSelector';
 import { TripSummary } from './TripSummary';
 import { DriverCard } from './DriverCard';
 import { SearchStates } from './SearchStates';
-// import { MapOverlay } from './MapOverlay';
 import { RIDE_TYPES, PAYMENT_METHODS, MOCK_DRIVER } from './constants';
-import { RideType, PaymentMethod, Driver, BookingStep } from './types';
 import { Ionicons } from '@expo/vector-icons';
 import LocationSelector from './LocationSelector';
+import { useBookingStore, useBookingSelectors } from '@/src/stores/booking/bookingStore';
 
 interface RideBookingProps {
   initialLocation?: [number, number];
@@ -35,50 +32,54 @@ export function RideBooking({
   selectedDestination = null,
   selectOnMap = false
 }: RideBookingProps) {
-  const router = useRouter();
   const { colorScheme } = useColorScheme();
   const mapRef = useRef<Mapbox.MapView>(null);
   const cameraRef = useRef<Mapbox.Camera>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  // Location states
-  const [currentLocation, setCurrentLocation] = useState<[number, number] | null>(null);
-  const [pickupLocation, setPickupLocation] = useState<[number, number] | null>(null);
-  const [destination, setDestination] = useState<LocationResult | null>(null);
-  
-  const [bottomSheetState, setBottomSheetState] = useState<{
-    index: number;
-    step: BookingStep;
-    isSelectingDestination: boolean;
-    isSelectingPickup: boolean;
-  }>({
-    index: 0,
-    step: 'idle',
-    isSelectingDestination: false,
-    isSelectingPickup: false,
-  });
-  
-  // Ride states
-  const [selectedRideType, setSelectedRideType] = useState<RideType>(RIDE_TYPES[0]);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>(PAYMENT_METHODS[0]);
-  
-  // Route states
-  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
-  const [routeDistance, setRouteDistance] = useState<string>('');
-  const [routeDuration, setRouteDuration] = useState<string>('');
-
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['15%', '50%', '96%'], []);
 
-  // Helper functions for BottomSheet state management
-  const updateBottomSheetState = (updates: Partial<typeof bottomSheetState>) => {
-    setBottomSheetState(prev => ({ ...prev, ...updates }));
-  };
+  // Zustand store selectors
+  const currentLocation = useBookingSelectors.currentLocation();
+  const pickupLocation = useBookingSelectors.pickupLocation();
+  const destination = useBookingSelectors.destination();
+  const bottomSheetState = useBookingSelectors.bottomSheetState();
+  const selectedRideType = useBookingSelectors.selectedRideType();
+  const selectedPaymentMethod = useBookingSelectors.selectedPaymentMethod();
+  const routeCoordinates = useBookingSelectors.routeCoordinates();
+  const routeDistance = useBookingSelectors.routeDistance();
+  const routeDuration = useBookingSelectors.routeDuration();
+  const driver = useBookingSelectors.driver();
 
-  const snapToIndex = (index: number) => {
-    bottomSheetRef.current?.snapToIndex(index);
-    updateBottomSheetState({ index });
-  };
+  // Zustand store actions
+  const {
+    setCurrentLocation,
+    setPickupLocation,
+    setDestination,
+    updateBottomSheetState,
+    snapToIndex,
+    setSelectedRideType,
+    calculateRoute,
+    confirmBooking,
+    startRide,
+    cancelBooking,
+    selectPickupLocation,
+    selectDestination,
+    openPickupLocationSelector,
+    handleMapPress,
+    handlePickupDrag,
+    handleDestinationDrag,
+  } = useBookingStore();
+
+  // Helper function for BottomSheet
+  const snapToIndexWithUpdate = useCallback((index: number) => {
+    try {
+      bottomSheetRef.current?.snapToIndex(index);
+      snapToIndex(index);
+    } catch (error) {
+      console.warn('Failed to snap to index:', error);
+    }
+  }, [snapToIndex]);
 
   // Subtle pulse animation
   useEffect(() => {
@@ -99,28 +100,23 @@ export function RideBooking({
     pulse();
   }, []);
 
-  const renderBackdrop = useCallback(
-    (props: any) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={0}
-        appearsOnIndex={1}
-        opacity={0.2}
-      />
-    ),
-    []
-  );
-
   useEffect(() => {
     setCurrentLocation(initialLocation);
-    setPickupLocation(initialLocation);
-  }, [initialLocation]);
+    // Set initial pickup location as a basic LocationResult
+    setPickupLocation({
+      id: 'current-location',
+      name: 'Current Location',
+      address: 'Your current location',
+      coordinates: initialLocation,
+      placeType: 'current'
+    });
+  }, [initialLocation, setCurrentLocation, setPickupLocation]);
 
   useEffect(() => {
     if (selectedDestination) {
       setDestination(selectedDestination);
       updateBottomSheetState({ step: 'selecting' });
-      snapToIndex(2);
+      snapToIndexWithUpdate(1);
 
       cameraRef.current?.setCamera({
         centerCoordinate: selectedDestination.coordinates,
@@ -128,194 +124,109 @@ export function RideBooking({
         animationDuration: 1000,
       });
     }
-  }, [selectedDestination]);
+  }, [selectedDestination, setDestination, updateBottomSheetState]);
 
   useEffect(() => {
     if (selectOnMap) {
-      updateBottomSheetState({ 
-        isSelectingDestination: true, 
+      updateBottomSheetState({
+        isSelectingDestination: true,
         step: 'idle',
-        index: 0 
+        index: 0
       });
-      snapToIndex(0);
+      snapToIndexWithUpdate(0);
     }
-  }, [selectOnMap]);
+  }, [selectOnMap, updateBottomSheetState]);
 
-  const handleMapPress = async (event: any) => {
-    const { isSelectingDestination, isSelectingPickup } = bottomSheetState;
-    if (!isSelectingDestination && !isSelectingPickup) return;
-
-    const { geometry } = event;
-    const coordinate: [number, number] = geometry.coordinates;
-
+  const handleMapPressEvent = useCallback(async (event: any) => {
     try {
-      if (isSelectingDestination) {
-        const location = await geocodingService.reverseGeocode(coordinate);
-
-        if (location) {
-          setDestination(location);
-          updateBottomSheetState({ 
-            isSelectingDestination: false, 
-            step: 'confirming' 
-          });
-          snapToIndex(1);
-
-          // คำนวณเส้นทาง
-          if (pickupLocation) {
-            await calculateRoute(pickupLocation, location.coordinates);
-          }
-        }
-      } else if (isSelectingPickup) {
-        setPickupLocation(coordinate);
-        updateBottomSheetState({ isSelectingPickup: false });
-
-        // คำนวณเส้นทางใหม่หากมีปลายทาง
-        if (destination) {
-          await calculateRoute(coordinate, destination.coordinates);
-        }
-      }
+      const { geometry } = event;
+      const coordinate: [number, number] = geometry.coordinates;
+      await handleMapPress(coordinate);
     } catch (error) {
-      console.error('Error selecting location:', error);
+      console.warn('Failed to handle map press:', error);
     }
+  }, [handleMapPress]);
+
+  const calculateRouteWithCamera = async (from: [number, number], to: [number, number]) => {
+    await calculateRoute(from, to);
+
+    // ปรับกล้องให้เห็นเส้นทางทั้งหมด
+    const bounds = {
+      ne: [
+        Math.max(from[0], to[0]) + 0.01,
+        Math.max(from[1], to[1]) + 0.01
+      ] as [number, number],
+      sw: [
+        Math.min(from[0], to[0]) - 0.01,
+        Math.min(from[1], to[1]) - 0.01
+      ] as [number, number]
+    };
+
+    cameraRef.current?.fitBounds(bounds.ne, bounds.sw, [50, 50, 50, 300], 1000);
   };
 
-  const calculateRoute = async (from: [number, number], to: [number, number]) => {
-    try {
-      const directions = await directionsService.getDirections([from, to]);
-
-      if (directions && directions.routes.length > 0) {
-        const route = directions.routes[0];
-        setRouteCoordinates(route.coordinates);
-        setRouteDistance(directionsService.formatDistance(route.distance));
-        setRouteDuration(directionsService.formatDuration(route.duration));
-
-        // ปรับกล้องให้เห็นเส้นทางทั้งหมด
-        const bounds = {
-          ne: [
-            Math.max(from[0], to[0]) + 0.01,
-            Math.max(from[1], to[1]) + 0.01
-          ] as [number, number],
-          sw: [
-            Math.min(from[0], to[0]) - 0.01,
-            Math.min(from[1], to[1]) - 0.01
-          ] as [number, number]
-        };
-
-        cameraRef.current?.fitBounds(bounds.ne, bounds.sw, [50, 50, 50, 300], 1000);
-      } else {
-        // ใช้การคำนวณแบบง่าย
-        const estimate = directionsService.calculateEstimate(from, to);
-        setRouteDistance(directionsService.formatDistance(estimate.distance));
-        setRouteDuration(directionsService.formatDuration(estimate.duration));
-        setRouteCoordinates([from, to]);
-      }
-    } catch (error) {
-      console.error('Error calculating route:', error);
-      // ใช้การคำนวณแบบง่าย
-      const estimate = directionsService.calculateEstimate(from, to);
-      setRouteDistance(directionsService.formatDistance(estimate.distance));
-      setRouteDuration(directionsService.formatDuration(estimate.duration));
-      setRouteCoordinates([from, to]);
+  const handleBottomSheetChange = useCallback((index: number) => {
+    // ถ้า index เป็น -1 (ปิด) ให้ snap กลับไปที่ 0 (15%)
+    if (index === -1) {
+      snapToIndexWithUpdate(0);
+      return;
     }
-  };
-
-  const handleLocationSelect = async (location: LocationResult) => {
-    setDestination(location);
-    updateBottomSheetState({ 
-      isSelectingDestination: false, 
-      step: 'selecting' 
-    });
-    snapToIndex(2);
-
-    cameraRef.current?.setCamera({
-      centerCoordinate: location.coordinates,
-      zoomLevel: 16,
-      animationDuration: 1000,
-    });
-
-    if (pickupLocation) {
-      await calculateRoute(pickupLocation, location.coordinates);
-    }
-  };
-
-  const handlePickupDrag = async (coordinate: [number, number]) => {
-    setPickupLocation(coordinate);
-
-    if (destination) {
-      await calculateRoute(coordinate, destination.coordinates);
-    }
-  };
-
-  const handleDestinationDrag = async (coordinate: [number, number]) => {
-    try {
-      const location = await geocodingService.reverseGeocode(coordinate);
-      if (location) {
-        setDestination(location);
-
-        if (pickupLocation) {
-          await calculateRoute(pickupLocation, coordinate);
-        }
-      }
-    } catch (error) {
-      console.error('Error updating destination:', error);
-    }
-  };
-
-  // Simplified BottomSheet actions
-  const startBookingFlow = () => {
-    updateBottomSheetState({ step: 'idle' });
-    bottomSheetRef.current?.snapToIndex(3);
-  };
-
-  const handleBottomSheetChange = (index: number) => {
     updateBottomSheetState({ index });
-  };
+  }, [updateBottomSheetState, snapToIndexWithUpdate]);
 
-  const confirmBooking = () => {
-    updateBottomSheetState({ step: 'searching' });
-    snapToIndex(1);
+  const handleConfirmBooking = useCallback(() => {
+    try {
+      confirmBooking();
+      snapToIndexWithUpdate(1);
+    } catch (error) {
+      console.warn('Failed to confirm booking:', error);
+    }
+  }, [confirmBooking, snapToIndexWithUpdate]);
 
-    setTimeout(() => {
-      updateBottomSheetState({ step: 'found' });
-    }, 3000);
-  };
+  const handleStartRide = useCallback(() => {
+    try {
+      startRide();
+      Alert.alert('Trip Started', 'Have a safe journey');
+    } catch (error) {
+      console.warn('Failed to start ride:', error);
+    }
+  }, [startRide]);
 
-  const startRide = () => {
-    updateBottomSheetState({ step: 'riding' });
-    Alert.alert('Trip Started', 'Have a safe journey');
-  };
+  const handleCancelBooking = useCallback(() => {
+    try {
+      cancelBooking();
+      snapToIndexWithUpdate(0);
+    } catch (error) {
+      console.warn('Failed to cancel booking:', error);
+    }
+  }, [cancelBooking, snapToIndexWithUpdate]);
 
-  const cancelBooking = () => {
-    setDestination(null);
-    setRouteCoordinates([]);
-    setRouteDistance('');
-    setRouteDuration('');
-    updateBottomSheetState({ 
-      step: 'idle',
-      isSelectingDestination: false,
-      isSelectingPickup: false,
-      index: 0
-    });
-    snapToIndex(0);
-  };
+  const handleSelectPickupLocation = useCallback((location: LocationResult) => {
+    try {
+      selectPickupLocation(location);
+      snapToIndexWithUpdate(1);
+    } catch (error) {
+      console.warn('Failed to select pickup location:', error);
+    }
+  }, [selectPickupLocation, snapToIndexWithUpdate]);
 
-  const selectPickupLocation = () => {
-    updateBottomSheetState({ 
-      isSelectingPickup: true,
-      step: 'idle',
-      index: 0
-    });
-    snapToIndex(0);
-  };
+  const handleSelectDestination = useCallback((location: LocationResult) => {
+    try {
+      selectDestination(location);
+      snapToIndexWithUpdate(1);
+    } catch (error) {
+      console.warn('Failed to select destination:', error);
+    }
+  }, [selectDestination, snapToIndexWithUpdate]);
 
-  const selectDestination = () => {
-    updateBottomSheetState({ 
-      isSelectingDestination: true,
-      step: 'idle',
-      index: 0
-    });
-    snapToIndex(0);
-  };
+  const handleOpenPickupLocationSelector = useCallback(() => {
+    try {
+      openPickupLocationSelector();
+      snapToIndexWithUpdate(2);
+    } catch (error) {
+      console.warn('Failed to open pickup location selector:', error);
+    }
+  }, [openPickupLocationSelector, snapToIndexWithUpdate]);
 
 
   return (
@@ -325,7 +236,7 @@ export function RideBooking({
         ref={mapRef}
         style={{ flex: 1 }}
         styleURL={colorScheme === 'dark' ? Mapbox.StyleURL.Dark : Mapbox.StyleURL.Light}
-        onPress={handleMapPress}
+        onPress={handleMapPressEvent}
       >
         <Mapbox.Camera
           ref={cameraRef}
@@ -344,7 +255,7 @@ export function RideBooking({
         {pickupLocation && (
           <DraggableMarker
             id="pickup-location"
-            coordinate={pickupLocation}
+            coordinate={pickupLocation.coordinates}
             type="pickup"
             draggable={bottomSheetState.step === 'selecting' || bottomSheetState.step === 'confirming'}
             onDragEnd={handlePickupDrag}
@@ -386,14 +297,13 @@ export function RideBooking({
         )}
       </Mapbox.MapView>
 
-    
+
 
       {/* Bottom Sheet */}
       <BottomSheet
         ref={bottomSheetRef}
         index={0}
         snapPoints={snapPoints}
-        backdropComponent={renderBackdrop}
         enablePanDownToClose={false}
         onChange={handleBottomSheetChange}
         backgroundStyle={{
@@ -405,25 +315,31 @@ export function RideBooking({
           height: 3,
         }}
       >
-        <BottomSheetView style={{ flex: 1, paddingHorizontal: 16 }}>
+        <BottomSheetView style={{ flex: 1 }}>
           {/* Idle State - แสดงปุ่มค้นหาเมื่อ index 0 */}
           {bottomSheetState.step === 'idle' && bottomSheetState.index === 0 && (
-            <TouchableOpacity
-              onPress={startBookingFlow}
-              className="flex flex-row items-center gap-3 bg-gray-100 dark:bg-neutral-900 p-3 mb-2 rounded-lg">
-              <Ionicons name='search' size={24} color={colorScheme === 'dark' ? '#ffffff' : '#000000'} />
-              <Text className="text-lg font-light font-anuphan-semibold text-gray-900 dark:text-gray-100">
-                อยากไปที่ไหนดี?
-              </Text>
-            </TouchableOpacity>
+            <View style={{ paddingHorizontal: 16 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  snapToIndexWithUpdate(3);
+                }}
+                className="flex flex-row items-center gap-3 bg-gray-100 dark:bg-neutral-900 p-3 mb-2 rounded-lg"
+              >
+                <Ionicons name='search' size={24} color={colorScheme === 'dark' ? '#ffffff' : '#000000'} />
+                <Text className="text-lg font-light font-anuphan-semibold text-gray-900 dark:text-gray-100">
+                  อยากไปที่ไหนดี?
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
 
           {/* Location Selector - แสดงเมื่อ index 2 และ step idle */}
           {bottomSheetState.step === 'idle' && bottomSheetState.index >= 2 && (
             <LocationSelector
-              onCancel={cancelBooking}
-              onSelectPickupLocation={selectPickupLocation}
-              onSelectDestination={selectDestination}
+              onCancel={handleCancelBooking}
+              onSelectPickupLocation={handleSelectPickupLocation}
+              onSelectDestination={handleSelectDestination}
+              currentLocation={initialLocation}
             />
           )}
 
@@ -434,7 +350,7 @@ export function RideBooking({
                 <Text className="text-2xl font-light text-gray-900 dark:text-gray-100">
                   Select ride
                 </Text>
-                <TouchableOpacity onPress={cancelBooking}>
+                <TouchableOpacity onPress={handleCancelBooking}>
                   <Icon as={XIcon} className="size-6 text-gray-400" />
                 </TouchableOpacity>
               </View>
@@ -454,7 +370,7 @@ export function RideBooking({
                 <Text className="text-2xl font-light text-gray-900 dark:text-gray-100">
                   Confirm trip
                 </Text>
-                <TouchableOpacity onPress={cancelBooking}>
+                <TouchableOpacity onPress={handleCancelBooking}>
                   <Icon as={XIcon} className="size-6 text-gray-400" />
                 </TouchableOpacity>
               </View>
@@ -466,13 +382,13 @@ export function RideBooking({
                 routeDuration={routeDuration}
                 selectedRideType={selectedRideType}
                 selectedPaymentMethod={selectedPaymentMethod}
-                onSelectPickupLocation={selectPickupLocation}
+                onSelectPickupLocation={handleOpenPickupLocationSelector}
               />
 
               {/* Action Buttons */}
               <View className="flex-row space-x-4">
                 <TouchableOpacity
-                  onPress={cancelBooking}
+                  onPress={handleCancelBooking}
                   className="flex-1 bg-gray-200 dark:bg-gray-800 rounded-2xl p-4"
                 >
                   <Text className="text-gray-700 dark:text-gray-300 font-light text-center text-lg">
@@ -481,7 +397,7 @@ export function RideBooking({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={confirmBooking}
+                  onPress={handleConfirmBooking}
                   className="flex-2 bg-gray-900 dark:bg-gray-100 rounded-2xl p-4"
                 >
                   <Text className="text-white dark:text-gray-900 font-medium text-center text-lg">
@@ -496,18 +412,18 @@ export function RideBooking({
           <SearchStates
             bookingStep={bottomSheetState.step}
             pulseAnim={pulseAnim}
-            onCancel={cancelBooking}
-            onStartRide={startRide}
+            onCancel={handleCancelBooking}
+            onStartRide={handleStartRide}
           />
 
           {/* Driver Found */}
-          {bottomSheetState.step === 'found' && (
+          {bottomSheetState.step === 'found' && driver && (
             <View className="flex-1 py-6">
-              <DriverCard driver={MOCK_DRIVER} />
+              <DriverCard driver={driver} />
 
               {/* Action Buttons */}
               <TouchableOpacity
-                onPress={startRide}
+                onPress={handleStartRide}
                 className="bg-gray-900 dark:bg-gray-100 rounded-2xl p-5 mb-4"
               >
                 <Text className="text-white dark:text-gray-900 font-medium text-center text-lg">
@@ -516,7 +432,7 @@ export function RideBooking({
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={cancelBooking}
+                onPress={handleCancelBooking}
                 className="bg-gray-200 dark:bg-gray-800 rounded-2xl p-4"
               >
                 <Text className="text-gray-700 dark:text-gray-300 font-light text-center">

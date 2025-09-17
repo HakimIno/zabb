@@ -2,11 +2,12 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { Text } from '@/src/components/ui/text';
 import { Icon } from '@/src/components/ui/icon';
-import { LocationResult, RideType, PaymentMethod } from './types';
+import { RideType, PaymentMethod } from './types';
+import { LocationResult } from '@/src/services/geocoding';
 
 interface TripSummaryProps {
   destination: LocationResult;
-  pickupLocation: [number, number] | null;
+  pickupLocation: LocationResult | null;
   routeDistance?: string;
   routeDuration?: string;
   selectedRideType: RideType;
@@ -37,7 +38,7 @@ export function TripSummary({
             <View className="mb-4">
               <Text className="text-sm text-gray-500 dark:text-gray-400 mb-1 font-light">From</Text>
               <Text className="font-medium text-gray-900 dark:text-gray-100">
-                จุดรับ
+                {pickupLocation?.name || 'จุดรับ'}
               </Text>
               <TouchableOpacity 
                 onPress={onSelectPickupLocation}

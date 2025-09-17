@@ -138,6 +138,13 @@ export class SearchService {
       { id: 'fallback-6', name: 'วัดพระแก้ว (Temple of the Emerald Buddha)', address: 'พระนคร, กรุงเทพมหานคร', coordinates: [100.4955, 13.74964] as [number, number], placeType: 'temple' },
       { id: 'fallback-7', name: 'วัดโพธิ์ (Wat Pho)', address: 'พระนคร, กรุงเทพมหานคร', coordinates: [100.4927, 13.7468] as [number, number], placeType: 'temple' },
       { id: 'fallback-8', name: 'วัดอรุณราชวราราม (Wat Arun)', address: 'ธนบุรี, กรุงเทพมหานคร', coordinates: [100.4889, 13.7437] as [number, number], placeType: 'temple' },
+      { id: 'fallback-9', name: 'วัดพระธรรมราช (Wat Phra Si Rattana Mahathat)', address: 'พระนคร, กรุงเทพมหานคร', coordinates: [100.4856, 13.7408] as [number, number], placeType: 'temple' },
+      { id: 'fallback-10', name: 'วัดพระธรรมราช (Wat Phra Si Rattana Mahathat)', address: 'พระนคร, กรุงเทพมหานคร', coordinates: [100.4856, 13.7408] as [number, number], placeType: 'temple' },
+      { id: 'fallback-11', name: 'วัดพระธรรมราช (Wat Phra Si Rattana Mahathat)', address: 'พระนคร, กรุงเทพมหานคร', coordinates: [100.4856, 13.7408] as [number, number], placeType: 'temple' },
+      { id: 'fallback-12', name: 'วัดพระธรรมราช (Wat Phra Si Rattana Mahathat)', address: 'พระนคร, กรุงเทพมหานคร', coordinates: [100.4856, 13.7408] as [number, number], placeType: 'temple' },
+      { id: 'fallback-13', name: 'วัดพระธรรมราช (Wat Phra Si Rattana Mahathat)', address: 'พระนคร, กรุงเทพมหานคร', coordinates: [100.4856, 13.7408] as [number, number], placeType: 'temple' },
+      { id: 'fallback-14', name: 'วัดพระธรรมราช (Wat Phra Si Rattana Mahathat)', address: 'พระนคร, กรุงเทพมหานคร', coordinates: [100.4856, 13.7408] as [number, number], placeType: 'temple' },
+      { id: 'fallback-15', name: 'วัดพระธรรมราช (Wat Phra Si Rattana Mahathat)', address: 'พระนคร, กรุงเทพมหานคร', coordinates: [100.4856, 13.7408] as [number, number], placeType: 'temple' },
     ];
 
     // Filter results that match the search query
