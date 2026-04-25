@@ -51,6 +51,7 @@
     "expo-splash-screen": "~55.0.19",
     "expo-status-bar": "~55.0.5",
     "expo-system-ui": "~55.0.16",
+    "expo-updates": "^55.0.21",
     "lucide-react-native": "^0.511.0",
     "nativewind": "^4.1.23",
     "react": "19.2.0",
@@ -76,11 +77,11 @@
     "typescript": "~5.9.2"
   },
   "resolutions": {
-  "lightningcss": "1.27.0",
-  "expo-dev-menu": "7.0.10",
-  "expo-dev-menu-interface": "55.0.2",
-  "expo-constants": "55.0.15",
-  "expo-font": "55.0.6"
-},
+    "lightningcss": "1.27.0",
+    "expo-dev-menu": "7.0.10",
+    "expo-dev-menu-interface": "55.0.2",
+    "expo-constants": "55.0.15",
+    "expo-font": "55.0.6"
+  },
   "private": true
 }

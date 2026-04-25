@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.travelglamai.zabb"
@@ -50,6 +52,12 @@
       "eas": {
         "projectId": "32335fc7-dfae-43bc-90c6-782e94aa230a"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/32335fc7-dfae-43bc-90c6-782e94aa230a"
     }
   }
 }
