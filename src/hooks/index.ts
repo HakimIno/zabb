@@ -1,8 +1,6 @@
 // Auth Hooks
-export { useAuth } from './useAuth';
-
-// Storage Hooks
-export { useStorage, useTheme, useLanguage, useOnboardingCompleted } from './useStorage';
-
+export { useAuth } from '@/features/auth/hooks/useAuth';
 // Location Hooks
-export { useLocationSearch } from './useLocationSearch';
+export { useLocationSearch } from '@/features/map/hooks/useLocationSearch';
+// Storage Hooks
+export { useLanguage, useOnboardingCompleted, useStorage, useTheme } from './useStorage';

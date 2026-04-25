@@ -1,16 +1,16 @@
 import '@/global.css';
 
-import { NAV_THEME } from '@/src/utils/theme';
 import { ThemeProvider } from '@react-navigation/native';
 import { PortalHost } from '@rn-primitives/portal';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryProvider } from '@/src/providers/QueryProvider';
+import { NAV_THEME } from '@/src/utils/theme';
 
 export {
   // Catch any errors thrown by the Layout component./
@@ -22,7 +22,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
-  
+
   const [fontsLoaded] = useFonts({
     'Anuphan-Thin': require('../assets/fonts/anuphan-thai-100-normal.ttf'),
     'Anuphan-ExtraLight': require('../assets/fonts/anuphan-thai-200-normal.ttf'),

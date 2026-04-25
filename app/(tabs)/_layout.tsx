@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
-import { useColorScheme } from 'nativewind';
 import { HomeIcon, UserIcon } from 'lucide-react-native';
-import { THEME } from '@/src/utils/theme';
+import { useColorScheme } from 'nativewind';
 
 export default function TabLayout() {
   const { colorScheme } = useColorScheme();
@@ -11,13 +10,14 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          elevation: 0
+          elevation: 0,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontFamily: 'Anuphan-Regular',
         },
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{

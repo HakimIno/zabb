@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        'anuphan': ['Anuphan-Regular', 'Anuphan-Latin-Regular'],
+        anuphan: ['Anuphan-Regular', 'Anuphan-Latin-Regular'],
         'anuphan-thin': ['Anuphan-Thin', 'Anuphan-Latin-Thin'],
         'anuphan-light': ['Anuphan-Light', 'Anuphan-Latin-Light'],
         'anuphan-medium': ['Anuphan-Medium', 'Anuphan-Latin-Medium'],

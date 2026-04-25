@@ -1,16 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { storageService } from '@/src/services/storage/storageService';
+import { useCallback, useEffect, useState } from 'react';
+import { storageService } from '@/services/storage';
 
 export const useStorage = <T>(key: string, defaultValue: T) => {
   const [value, setValue] = useState<T>(defaultValue);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load value from storage on mount
-  useEffect(() => {
-    loadValue();
-  }, [key]);
-
-  const loadValue = async () => {
+  const loadValue = useCallback(async () => {
     try {
       const storedValue = await storageService.getItem<T>(key);
       if (storedValue !== null) {
@@ -21,17 +16,25 @@ export const useStorage = <T>(key: string, defaultValue: T) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const updateValue = useCallback(async (newValue: T) => {
-    try {
-      await storageService.setItem(key, newValue);
-      setValue(newValue);
-    } catch (error) {
-      console.error(`Error saving ${key} to storage:`, error);
-      throw error;
-    }
   }, [key]);
+
+  // Load value from storage on mount
+  useEffect(() => {
+    loadValue();
+  }, [loadValue]);
+
+  const updateValue = useCallback(
+    async (newValue: T) => {
+      try {
+        await storageService.setItem(key, newValue);
+        setValue(newValue);
+      } catch (error) {
+        console.error(`Error saving ${key} to storage:`, error);
+        throw error;
+      }
+    },
+    [key]
+  );
 
   const removeValue = useCallback(async () => {
     try {

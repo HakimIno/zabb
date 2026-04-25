@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { AuthState, User } from '@/src/types';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { storageService } from '@/src/services/storage/storageService';
+import type { AuthState, User } from '@/src/types';
 
 interface AuthStore extends AuthState {
   // Actions
@@ -16,7 +16,7 @@ interface AuthStore extends AuthState {
 
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       // Initial state
       user: null,
       isAuthenticated: false,
@@ -29,19 +29,21 @@ export const useAuthStore = create<AuthStore>()(
       setError: (error) => set({ error }),
       setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
 
-      login: (user) => set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      }),
+      login: (user) =>
+        set({
+          user,
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        }),
 
-      logout: () => set({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      }),
+      logout: () =>
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: null,
+        }),
 
       clearError: () => set({ error: null }),
     }),

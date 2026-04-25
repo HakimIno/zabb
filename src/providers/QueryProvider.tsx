@@ -1,8 +1,7 @@
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AppState, Platform } from 'react-native';
 import type { AppStateStatus } from 'react-native';
-import { focusManager, onlineManager } from '@tanstack/react-query';
+import { AppState, Platform } from 'react-native';
 
 // Setup for React Native as per TanStack Query docs
 function onAppStateChange(status: AppStateStatus) {
@@ -38,9 +37,5 @@ export function QueryProvider({ children }: QueryProviderProps) {
     return () => subscription?.remove();
   }, []);
 
-  return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }

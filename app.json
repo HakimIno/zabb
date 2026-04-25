@@ -7,15 +7,12 @@
     "icon": "./assets/images/icon.png",
     "scheme": "zabb",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.travelglamai.zabb"
@@ -42,7 +39,9 @@
           "RNMapboxMapsImpl": "mapbox",
           "RNMapboxMapsDownloadToken": "sk.eyJ1Ijoid2VlcmFjaGl0IiwiYSI6ImNtZmY3eTZnNzBpaGMya3NndDZnd2pqOGEifQ.XfKoxoJyVVSlPL6lFn2E1Q"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-maps"
     ],
     "experiments": {
       "typedRoutes": true

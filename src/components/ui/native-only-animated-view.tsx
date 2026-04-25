@@ -1,12 +1,12 @@
-import React from 'react'
-import Animated from 'react-native-reanimated'
+import type React from 'react';
+import Animated from 'react-native-reanimated';
 
 interface NativeOnlyAnimatedViewProps {
-  children?: React.ReactNode
-  className?: string
-  entering?: any
-  exiting?: any
-  [key: string]: any
+  children?: React.ReactNode;
+  className?: string;
+  entering?: any;
+  exiting?: any;
+  [key: string]: any;
 }
 
 const NativeOnlyAnimatedView = ({ children, className, ...props }: NativeOnlyAnimatedViewProps) => {
@@ -14,7 +14,7 @@ const NativeOnlyAnimatedView = ({ children, className, ...props }: NativeOnlyAni
     <Animated.View className={className} {...props}>
       {children}
     </Animated.View>
-  )
-}
+  );
+};
 
-export default NativeOnlyAnimatedView
+export default NativeOnlyAnimatedView;

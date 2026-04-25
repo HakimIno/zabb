@@ -15,10 +15,12 @@ export { Text } from './ui/text';
 // export { LoadingSpinner } from './common/LoadingSpinner';
 // export { ErrorBoundary } from './common/ErrorBoundary';
 
+export { DraggableMarker } from './location/DraggableMarker';
+export { FloatingPin } from './location/FloatingPin';
+export { InteractiveMap } from './location/InteractiveMap';
 // Location Components
 export { LocationSearch } from './location/LocationSearch';
-export { MapMarker, CustomMarker } from './location/MapMarker';
-export { InteractiveMap } from './location/InteractiveMap';
+export { CustomMarker, MapMarker } from './location/MapMarker';
 export { SimpleMarker } from './location/SimpleMarker';
 
 // Ride Components
