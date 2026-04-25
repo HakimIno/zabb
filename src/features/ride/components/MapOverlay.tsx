@@ -1,7 +1,7 @@
 import { ArrowRightIcon, NavigationIcon, SearchIcon } from 'lucide-react-native';
 import { TouchableOpacity, View } from 'react-native';
-import { Icon } from '@/src/components/ui/icon';
-import { Text } from '@/src/components/ui/text';
+import { Icon } from '@/ui/icon';
+import { Text } from '@/ui/text';
 import type { BookingStep } from './types';
 
 interface MapOverlayProps {

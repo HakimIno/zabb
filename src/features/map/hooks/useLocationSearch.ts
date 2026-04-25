@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchPlaces } from '@/features/ride/hooks/useSearch';
 import type { LocationResult, SearchRequest } from '@/features/ride/services/searchService';
 
@@ -15,7 +15,7 @@ interface UseLocationSearchProps {
 export const useLocationSearch = ({ currentLocation }: UseLocationSearchProps) => {
   const [focusedField, setFocusedField] = useState<FieldType | null>(null);
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const debounceTimeoutRef = useRef<number | null>(null);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Simplified state management for both fields
   const [searchFields, setSearchFields] = useState<Record<FieldType, SearchFieldState>>({

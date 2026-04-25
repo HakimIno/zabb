@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS } from '@/src/constants';
+import { STORAGE_KEYS } from '@/utils/constants';
 
 class StorageService {
-  async setItem(key: string, value: any): Promise<void> {
+  async setItem(key: string, value: unknown): Promise<void> {
     try {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(key, jsonValue);
@@ -57,7 +57,7 @@ class StorageService {
     return this.getItem<string>(STORAGE_KEYS.REFRESH_TOKEN);
   }
 
-  async setUserData(user: any): Promise<void> {
+  async setUserData(user: unknown): Promise<void> {
     return this.setItem(STORAGE_KEYS.USER_DATA, user);
   }
 

@@ -126,6 +126,7 @@ export function DraggableMarker({
     setIsDragging(true);
   };
 
+  // biome-ignore lint/suspicious/noExplicitAny: Mapbox event type is complex
   const handleDragEnd = (event: any) => {
     setIsDragging(false);
     if (onDragEnd) {

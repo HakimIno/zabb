@@ -1,6 +1,6 @@
-import { ERROR_MESSAGES } from '@/src/constants';
-import type { ApiResponse, GoogleLoginForm, User } from '@/src/types';
-import { apiClient } from '../api/client';
+import { apiClient } from '@/services/api';
+import type { ApiResponse, GoogleLoginForm, User } from '@/types';
+import { ERROR_MESSAGES } from '@/utils/constants';
 
 export interface AuthTokens {
   accessToken: string;

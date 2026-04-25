@@ -1,9 +1,9 @@
 import { MapPinIcon, SearchIcon, XIcon } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, TextInput, TouchableOpacity, View } from 'react-native';
-import { Icon } from '@/src/components/ui/icon';
-import { Text } from '@/src/components/ui/text';
-import { geocodingService, type LocationResult } from '@/src/services/geocoding';
+import { geocodingService, type LocationResult } from '@/features/map/services/geocoding';
+import { Icon } from '@/ui/icon';
+import { Text } from '@/ui/text';
 
 interface LocationSearchProps {
   onLocationSelect: (location: LocationResult) => void;
@@ -20,7 +20,7 @@ export function LocationSearch({
   const [results, setResults] = useState<LocationResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ค้นหาสถานที่เมื่อมีการพิมพ์
   useEffect(() => {
@@ -110,7 +110,7 @@ export function LocationSearch({
         <View className="absolute top-full left-0 right-0 z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 max-h-64 shadow-lg">
           {isLoading ? (
             <View className="p-4 items-center">
-              <ActivityIndicator size="small" color="#3B82F6" />
+              <ActivityIndicator color="#3B82F6" />
               <Text className="text-gray-500 dark:text-gray-400 mt-2">กำลังค้นหา...</Text>
             </View>
           ) : results.length > 0 ? (

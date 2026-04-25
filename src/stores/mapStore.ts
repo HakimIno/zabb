@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { LocationResult } from '@/src/services/geocoding';
+import type { LocationResult } from '@/features/map/services/geocoding';
 
 interface MapState {
   // สถานะแผนที่

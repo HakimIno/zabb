@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { cn } from '@/src/utils/utils';
+import { cn } from '@/utils/utils';
 
 const Skeleton = React.forwardRef<View, React.ComponentProps<typeof View>>(
   ({ className, ...props }, ref) => {

@@ -66,16 +66,24 @@ export class DirectionsService {
       }
 
       return {
-        routes: data.routes.map((route: any) => ({
-          coordinates: route.geometry.coordinates,
-          distance: route.distance,
-          duration: route.duration,
-          geometry: JSON.stringify(route.geometry),
-        })),
-        waypoints: data.waypoints.map((waypoint: any) => ({
-          location: waypoint.location,
-          name: waypoint.name || '',
-        })),
+        routes: data.routes.map(
+          (route: {
+            geometry: { coordinates: [number, number][] };
+            distance: number;
+            duration: number;
+          }) => ({
+            coordinates: route.geometry.coordinates,
+            distance: route.distance,
+            duration: route.duration,
+            geometry: JSON.stringify(route.geometry),
+          })
+        ),
+        waypoints: data.waypoints.map(
+          (waypoint: { location: [number, number]; name?: string }) => ({
+            location: waypoint.location,
+            name: waypoint.name || '',
+          })
+        ),
       };
     } catch (error) {
       console.error('Error getting directions:', error);

@@ -202,6 +202,7 @@ export function RideBooking({
   }, [snapToIndexWithUpdate]);
 
   const handleMapPressEvent = useCallback(
+    // biome-ignore lint/suspicious/noExplicitAny: Mapbox event type is complex
     async (event: any) => {
       try {
         const { geometry } = event;
@@ -530,7 +531,6 @@ export function RideBooking({
             bookingStep={bottomSheetState.step}
             pulseAnim={pulseAnim}
             onCancel={handleCancelBooking}
-            onStartRide={handleStartRide}
           />
 
           {/* Driver Found */}

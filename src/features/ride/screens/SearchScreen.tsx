@@ -24,18 +24,22 @@ interface SearchScreenProps {
 }
 
 // Mock data for recent searches and popular destinations
-const RECENT_SEARCHES = [
-  { id: '1', name: 'Central World', address: 'Ratchadamri Road, Bangkok', type: 'shopping' },
-  { id: '2', name: 'Siam Paragon', address: 'Rama I Road, Bangkok', type: 'shopping' },
-  {
-    id: '3',
-    name: 'Chatuchak Weekend Market',
-    address: 'Kamphaeng Phet 2 Road, Bangkok',
-    type: 'market',
-  },
-];
+interface PopularDestination {
+  id: string;
+  name: string;
+  address: string;
+  type: string;
+  distance: string;
+}
 
-const POPULAR_DESTINATIONS = [
+interface RecentSearch {
+  id: string;
+  name: string;
+  address: string;
+  type: string;
+}
+
+const POPULAR_DESTINATIONS: PopularDestination[] = [
   {
     id: '1',
     name: 'Suvarnabhumi Airport',
@@ -80,6 +84,17 @@ const POPULAR_DESTINATIONS = [
   },
 ];
 
+const RECENT_SEARCHES: RecentSearch[] = [
+  { id: '1', name: 'Central World', address: 'Ratchadamri Road, Bangkok', type: 'shopping' },
+  { id: '2', name: 'Siam Paragon', address: 'Rama I Road, Bangkok', type: 'shopping' },
+  {
+    id: '3',
+    name: 'Chatuchak Weekend Market',
+    address: 'Kamphaeng Phet 2 Road, Bangkok',
+    type: 'market',
+  },
+];
+
 const QUICK_ACTIONS = [
   { id: 'home', name: 'Home', icon: HomeIcon },
   { id: 'work', name: 'Work', icon: BuildingIcon },
@@ -91,7 +106,9 @@ export function SearchScreen({ currentLocation, onLocationSelect }: SearchScreen
   const { colorScheme } = useColorScheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const searchTimeoutRef = useRef<number | null>(null);
+  const [_isLoading, _setIsLoading] = useState(false);
+  const [_isFocused, _setIsFocused] = useState(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounce search query
   useEffect(() => {
@@ -133,7 +150,6 @@ export function SearchScreen({ currentLocation, onLocationSelect }: SearchScreen
   const {
     data: searchResults = [],
     isLoading: isSearching,
-    error: searchError,
     isError,
   } = useSearchPlaces(searchRequest, {
     enabled: !!searchRequest,
@@ -189,7 +205,7 @@ export function SearchScreen({ currentLocation, onLocationSelect }: SearchScreen
     }
   };
 
-  const handlePopularDestinationSelect = (destination: any) => {
+  const handlePopularDestinationSelect = (destination: PopularDestination) => {
     const location: LocationResult = {
       id: destination.id,
       name: destination.name,
@@ -200,7 +216,7 @@ export function SearchScreen({ currentLocation, onLocationSelect }: SearchScreen
     handleLocationSelect(location);
   };
 
-  const handleRecentSearchSelect = (search: any) => {
+  const handleRecentSearchSelect = (search: RecentSearch) => {
     const location: LocationResult = {
       id: search.id,
       name: search.name,

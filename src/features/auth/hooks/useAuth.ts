@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { authService } from '@/features/auth/services/authService';
 import { apiClient } from '@/services/api';
 import { storageService } from '@/services/storage';
-import type { AuthState, User } from '@/types';
+import type { AuthState, GoogleLoginForm, User } from '@/types';
 
 export const useAuth = () => {
   const [authState, setAuthState] = useState<AuthState>({
@@ -90,11 +90,11 @@ export const useAuth = () => {
     }
   }, []);
 
-  const loginWithGoogle = useCallback(async (googleData: any) => {
+  const loginWithGoogle = useCallback(async (googleData: unknown) => {
     setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      const response = await authService.loginWithGoogle(googleData);
+      const response = await authService.loginWithGoogle(googleData as GoogleLoginForm);
 
       if (response.success && response.data) {
         const { user, tokens } = response.data;

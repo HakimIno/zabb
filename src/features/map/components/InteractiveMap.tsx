@@ -3,10 +3,10 @@ import { MapPinIcon, NavigationIcon, PlusIcon, SearchIcon, TrashIcon } from 'luc
 import { useColorScheme } from 'nativewind';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, TouchableOpacity, View } from 'react-native';
-import { Icon } from '@/src/components/ui/icon';
-import { Text } from '@/src/components/ui/text';
-import { geocodingService, type LocationResult } from '@/src/services/geocoding';
-import { useMapStore } from '@/src/stores/mapStore';
+import { geocodingService, type LocationResult } from '@/features/map/services/geocoding';
+import { useMapStore } from '@/stores/mapStore';
+import { Icon } from '@/ui/icon';
+import { Text } from '@/ui/text';
 import { LocationSearch } from './LocationSearch';
 import { CustomMarker, MapMarker } from './MapMarker';
 
@@ -48,6 +48,7 @@ export function InteractiveMap({
   }, [initialLocation, currentLocation, setCurrentLocation]);
 
   // จัดการการแตะบนแผนที่
+  // biome-ignore lint/suspicious/noExplicitAny: Mapbox event type is complex
   const handleMapPress = async (event: any) => {
     if (!isAddingMarker) return;
 

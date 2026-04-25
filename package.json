@@ -23,7 +23,8 @@
     "submit:prod:android": "eas submit --profile production --platform android",
     "lint": "biome lint .",
     "format": "biome format --write .",
-    "check": "biome check --write --unsafe ."
+    "check": "biome check --write --unsafe .",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

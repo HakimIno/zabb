@@ -8,10 +8,9 @@ interface SearchStatesProps {
   bookingStep: BookingStep;
   pulseAnim: Animated.Value;
   onCancel: () => void;
-  onStartRide: () => void;
 }
 
-export function SearchStates({ bookingStep, pulseAnim, onCancel, onStartRide }: SearchStatesProps) {
+export function SearchStates({ bookingStep, pulseAnim, onCancel }: SearchStatesProps) {
   if (bookingStep === 'searching') {
     return (
       <View className="flex-1 items-center justify-center py-12">

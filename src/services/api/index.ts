@@ -1,9 +1,10 @@
-import { API_CONFIG } from '@/src/constants';
-import type { ApiResponse } from '@/src/types';
+import type { ApiResponse } from '@/types';
+import { API_CONFIG } from '@/utils/constants';
 
 class ApiClient {
   private baseURL: string;
   private timeout: number;
+  private authToken?: string;
 
   constructor() {
     this.baseURL = API_CONFIG.BASE_URL;
@@ -13,10 +14,14 @@ class ApiClient {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
 
-    const defaultHeaders = {
+    const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
+
+    if (this.authToken) {
+      defaultHeaders.Authorization = `Bearer ${this.authToken}`;
+    }
 
     const config: RequestInit = {
       ...options,
@@ -51,7 +56,7 @@ class ApiClient {
 
   async post<T>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     headers?: Record<string, string>
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
@@ -63,7 +68,7 @@ class ApiClient {
 
   async put<T>(
     endpoint: string,
-    data?: any,
+    data?: unknown,
     headers?: Record<string, string>
   ): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {

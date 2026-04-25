@@ -1,9 +1,9 @@
 import Mapbox from '@rnmapbox/maps';
 import { MapPinIcon, XIcon } from 'lucide-react-native';
 import { TouchableOpacity, View } from 'react-native';
-import { Icon } from '@/src/components/ui/icon';
-import { Text } from '@/src/components/ui/text';
-import type { LocationResult } from '@/src/services/geocoding';
+import type { LocationResult } from '@/features/map/services/geocoding';
+import { Icon } from '@/ui/icon';
+import { Text } from '@/ui/text';
 
 interface MapMarkerProps {
   location: LocationResult;

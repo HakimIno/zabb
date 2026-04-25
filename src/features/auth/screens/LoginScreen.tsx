@@ -11,10 +11,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import BottomSheetSelect from '@/features/auth/components/bottom-sheet-select';
+import BottomSheetSelect, { type SelectItem } from '@/features/auth/components/bottom-sheet-select';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button } from '@/ui/button';
-import { UIText } from '@/ui/text';
+import { Text } from '@/ui/text';
 import {
   COUNTRIES,
   type Country,
@@ -34,7 +34,7 @@ export default function LoginScreen() {
     console.log('BottomSheet index changed to:', index);
   }, []);
 
-  const handleCountrySelect = useCallback((item: any) => {
+  const handleCountrySelect = useCallback((item: SelectItem<Country>) => {
     setSelectedCountry(item.value);
   }, []);
 
@@ -48,6 +48,7 @@ export default function LoginScreen() {
       icon: country.flag,
     }));
   }, []);
+
   const handlePhoneLogin = async () => {
     if (!phoneNumber.trim()) {
       Alert.alert('ข้อผิดพลาด', 'กรุณากรอกเบอร์มือถือ');
@@ -91,9 +92,9 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           <View className="flex-1 justify-center px-6">
             {/* Phone Login Form */}
-            <UIText className="text-sm text-foreground mb-2 mx-1 font-anuphan-medium">
+            <Text className="text-sm text-foreground mb-2 mx-1 font-anuphan-medium">
               กรอกเบอร์โทรศัพท์ของคุณ
-            </UIText>
+            </Text>
             <View className="mb-6">
               {/* Phone Number Input */}
               <View className="flex-row items-center border border-border rounded-lg bg-background">
@@ -101,10 +102,10 @@ export default function LoginScreen() {
                   className="flex-row items-center px-3  border-r border-border"
                   onPress={() => bottomSheetRef.current?.expand()}
                 >
-                  <UIText className="text-xl mr-2 font-anuphan">{selectedCountry.flag}</UIText>
-                  <UIText className="text-muted-foreground text-sm font-anuphan">
+                  <Text className="text-xl mr-2 font-anuphan">{selectedCountry.flag}</Text>
+                  <Text className="text-muted-foreground text-sm font-anuphan">
                     {selectedCountry.dialCode}
-                  </UIText>
+                  </Text>
                 </TouchableOpacity>
                 <TextInput
                   className="flex-1 py-3 px-3 text-foreground"
@@ -118,16 +119,16 @@ export default function LoginScreen() {
               </View>
               <Button className="mt-4" onPress={handlePhoneLogin} disabled={isLoading}>
                 <Ionicons name="chatbubble-ellipses" size={20} className=" mr-2" color="#fff" />
-                <UIText className="text-primary-foreground font-anuphan-medium">
+                <Text className="text-primary-foreground font-anuphan-medium">
                   {isLoading ? 'กำลังส่ง...' : 'ส่งรหัส OTP'}
-                </UIText>
+                </Text>
               </Button>
             </View>
 
             {/* Divider */}
             <View className="flex-row items-center my-3">
               <View className="flex-1 h-px bg-border" />
-              <UIText className="px-4 text-muted-foreground text-xs font-anuphan">หรือ</UIText>
+              <Text className="px-4 text-muted-foreground text-xs font-anuphan">หรือ</Text>
               <View className="flex-1 h-px bg-border" />
             </View>
 
@@ -139,28 +140,26 @@ export default function LoginScreen() {
               className="mb-2"
             >
               <Ionicons name="logo-google" size={20} color="#000" />
-              <UIText className="text-foreground font-anuphan-medium">เข้าสู่ระบบด้วย Google</UIText>
+              <Text className="text-foreground font-anuphan-medium">เข้าสู่ระบบด้วย Google</Text>
             </Button>
 
             {/* Terms */}
             <View className="mt-12">
-              <UIText className="text-xs text-muted-foreground text-center leading-5 font-anuphan">
+              <Text className="text-xs text-muted-foreground text-center leading-5 font-anuphan">
                 การเข้าสู่ระบบแสดงว่าคุณยอมรับ{' '}
-                <UIText className="text-primary underline text-xs font-anuphan">
-                  ข้อกำหนดการใช้งาน
-                </UIText>{' '}
+                <Text className="text-primary underline text-xs font-anuphan">ข้อกำหนดการใช้งาน</Text>{' '}
                 และ{' '}
-                <UIText className="text-primary underline text-xs font-anuphan">
+                <Text className="text-primary underline text-xs font-anuphan">
                   นโยบายความเป็นส่วนตัว
-                </UIText>
-              </UIText>
+                </Text>
+              </Text>
             </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
 
       {/* BottomSheet Component */}
-      <BottomSheetSelect
+      <BottomSheetSelect<Country>
         bottomSheetRef={bottomSheetRef}
         handleSheetChanges={handleSheetChanges}
         title="เลือกประเทศ"

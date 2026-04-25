@@ -4,41 +4,39 @@ import type React from 'react';
 import { useCallback } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-interface SelectItem {
+export interface SelectItem<T = unknown> {
   id: string;
   label: string;
-  value: any;
+  value: T;
   subtitle?: string;
   icon?: string;
 }
 
-interface BottomSheetSelectProps {
+interface BottomSheetSelectProps<T = unknown> {
   bottomSheetRef: React.RefObject<BottomSheet | null>;
   handleSheetChanges: (index: number) => void;
   title: string;
-  data: SelectItem[];
-  onSelect: (item: SelectItem) => void;
-  selectedValue?: any;
-  searchable?: boolean;
+  data: SelectItem<T>[];
+  onSelect: (item: SelectItem<T>) => void;
+  selectedValue?: T;
   snapPoints: string[];
 }
 
-const BottomSheetSelect = ({
+const BottomSheetSelect = <T,>({
   bottomSheetRef,
   handleSheetChanges,
   title,
   data,
   onSelect,
   selectedValue,
-  searchable = false,
   snapPoints,
-}: BottomSheetSelectProps) => {
+}: BottomSheetSelectProps<T>) => {
   const handleClose = useCallback(() => {
     bottomSheetRef.current?.close();
   }, [bottomSheetRef]);
 
   const handleItemSelect = useCallback(
-    (item: SelectItem) => {
+    (item: SelectItem<T>) => {
       onSelect(item);
       handleClose();
     },
@@ -46,8 +44,8 @@ const BottomSheetSelect = ({
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: SelectItem }) => {
-      const isSelected = selectedValue && item.value === selectedValue;
+    ({ item }: { item: SelectItem<T> }) => {
+      const isSelected = !!selectedValue && item.value === selectedValue;
 
       return (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -98,7 +96,7 @@ const BottomSheetSelect = ({
     >
       <BottomSheetFlatList
         data={data}
-        keyExtractor={(item: SelectItem) => item.id}
+        keyExtractor={(item: SelectItem<T>) => item.id}
         renderItem={renderItem}
         ListHeaderComponent={ListHeaderComponent}
         style={styles.list}

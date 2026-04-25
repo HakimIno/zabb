@@ -28,7 +28,6 @@ const LocationSelector = ({
 }: LocationSelectorProps) => {
   const {
     focusedField,
-    searchFields,
     setFocusedField,
     updateFieldText,
     getFieldState,

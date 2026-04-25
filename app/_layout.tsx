@@ -9,8 +9,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'nativewind';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { QueryProvider } from '@/src/providers/QueryProvider';
-import { NAV_THEME } from '@/src/utils/theme';
+import { QueryProvider } from '@/providers/QueryProvider';
+import { NAV_THEME } from '@/utils/theme';
 
 export {
   // Catch any errors thrown by the Layout component./

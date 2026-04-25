@@ -1,10 +1,6 @@
 import { Tabs } from 'expo-router';
 import { HomeIcon, UserIcon } from 'lucide-react-native';
-import { useColorScheme } from 'nativewind';
-
 export default function TabLayout() {
-  const { colorScheme } = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{

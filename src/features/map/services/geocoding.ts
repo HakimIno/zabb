@@ -65,13 +65,21 @@ export class GeocodingService {
         return this.getFallbackSearchResults(query);
       }
 
-      return data.features.map((feature: any) => ({
-        id: feature.id,
-        name: feature.text || feature.place_name,
-        address: feature.place_name,
-        coordinates: feature.center,
-        placeType: feature.place_type?.[0],
-      }));
+      return data.features.map(
+        (feature: {
+          id: string;
+          text?: string;
+          place_name: string;
+          center: [number, number];
+          place_type?: string[];
+        }) => ({
+          id: feature.id,
+          name: feature.text || feature.place_name,
+          address: feature.place_name,
+          coordinates: feature.center,
+          placeType: feature.place_type?.[0],
+        })
+      );
     } catch (error) {
       console.warn('Network error during search, using fallback data:', error);
       // ใช้ fallback data แทนการ return empty array
@@ -152,7 +160,13 @@ export class GeocodingService {
       const data = await response.json();
 
       if (data.features && data.features.length > 0) {
-        const feature = data.features[0];
+        const feature = data.features[0] as {
+          id: string;
+          text?: string;
+          place_name: string;
+          center: [number, number];
+          place_type?: string[];
+        };
         return {
           id: feature.id,
           name: feature.text || feature.place_name,
@@ -194,13 +208,21 @@ export class GeocodingService {
 
       const data = await response.json();
 
-      return data.features.map((feature: any) => ({
-        id: feature.id,
-        name: feature.text || feature.place_name,
-        address: feature.place_name,
-        coordinates: feature.center,
-        placeType: feature.place_type?.[0],
-      }));
+      return data.features.map(
+        (feature: {
+          id: string;
+          text?: string;
+          place_name: string;
+          center: [number, number];
+          place_type?: string[];
+        }) => ({
+          id: feature.id,
+          name: feature.text || feature.place_name,
+          address: feature.place_name,
+          coordinates: feature.center,
+          placeType: feature.place_type?.[0],
+        })
+      );
     } catch (error) {
       console.error('Error searching nearby places:', error);
       return [];

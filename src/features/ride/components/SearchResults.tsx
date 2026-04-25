@@ -2,8 +2,8 @@ import { MapPinIcon } from 'lucide-react-native';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import type { LocationResult } from '@/features/ride/services/searchService';
-import { Icon } from '../ui/icon';
-import { Skeleton } from '../ui/skeleton';
+import { Icon } from '@/ui/icon';
+import { Skeleton } from '@/ui/skeleton';
 
 type FieldType = 'pickup' | 'destination';
 
