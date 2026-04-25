@@ -76,8 +76,11 @@
     "typescript": "~5.9.2"
   },
   "resolutions": {
-    "lightningcss": "1.27.0",
-    "expo-dev-menu": "7.0.10"
-  },
+  "lightningcss": "1.27.0",
+  "expo-dev-menu": "7.0.10",
+  "expo-dev-menu-interface": "55.0.2",
+  "expo-constants": "55.0.15",
+  "expo-font": "55.0.6"
+},
   "private": true
 }
